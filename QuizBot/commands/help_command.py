@@ -6,11 +6,11 @@ class HelpCommand:
     @staticmethod
     async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
-            "📚 Доступные команды:\n"
+            "Доступные команды:\n"
             "/start — приветствие\n"
-            "/help — эта справка\n"
+            "/help — справка\n"
             "/word — учить слово\n"
             "/fact — интересный факт\n"
             "/progress — показать прогресс\n"
-            "/restart — сбросить весь прогресс"
+            "/restart — сбросить прогресс"
         )

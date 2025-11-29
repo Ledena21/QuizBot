@@ -1,28 +1,25 @@
 # commands/progress_command.py
 from telegram import Update
-from telegram.ext import ContextTypes
-from QuizBot.tasks.vocab import VOCAB_RU_TO_HR  # ← используем один из словарей
+from QuizBot.tasks.vocab import VOCAB_RU_TO_HR
 from QuizBot.progress_manager import get_user_data, _progress
 
 class ProgressCommand:
     @staticmethod
-    async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user_id = str(update.effective_user.id)
-        user_data = get_user_data(_progress, user_id)
-
+    async def execute(update: Update, context):
+        user_data = get_user_data(_progress, str(update.effective_user.id))
         level = user_data["level"]
-        total_words_in_level = len(VOCAB_RU_TO_HR.get(level, []))
-        learned_count = len(user_data["progress"].get(level, set()))
 
-        total_correct = user_data["stats"]["total_correct"]
-        total_attempts = user_data["stats"]["total_attempts"]
-        accuracy = (total_correct / total_attempts * 100) if total_attempts > 0 else 0
+        learned = len(user_data["progress"].get(level, set()))
+        total = len(VOCAB_RU_TO_HR.get(level, []))
 
-        msg = (
-            f"📊 Ваш прогресс:\n\n"
-            f"🔹 Уровень: *{level}*\n"
-            f"🔹 Выучено слов: *{learned_count}/{total_words_in_level}*\n"
-            f"🔹 Точность: *{accuracy:.1f}%* ({total_correct}/{total_attempts})"
+        correct = user_data["stats"]["total_correct"]
+        attempts = user_data["stats"]["total_attempts"]
+        accuracy = correct / attempts * 100 if attempts else 0
+
+        await update.message.reply_text(
+            f"Ваш прогресс:\n\n"
+            f"Уровень: *{level}*\n"
+            f"Слова: *{learned}/{total}*\n"
+            f"Точность: *{accuracy:.1f}%* ({correct}/{attempts})",
+            parse_mode="Markdown"
         )
-
-        await update.message.reply_text(msg, parse_mode="Markdown")

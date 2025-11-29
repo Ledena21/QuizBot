@@ -1,7 +1,6 @@
 # commands/word_command.py
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
-import random
 from QuizBot.tasks.vocab import VOCAB_RU_TO_HR, VOCAB_HR_TO_RU
 from QuizBot.progress_manager import _progress, get_user_data
 

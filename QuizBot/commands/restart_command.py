@@ -9,4 +9,4 @@ class RestartCommand:
         if user_id in _progress:
             del _progress[user_id]
             save_progress(_progress)
-        await update.message.reply_text("👋 Ваш прогресс сброшен!\nМожете начать заново с команды /word.")
+        await update.message.reply_text("Ваш прогресс сброшен.\nМожете начать заново с команды /word или /fact.")

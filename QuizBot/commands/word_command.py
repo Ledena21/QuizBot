@@ -1,29 +1,19 @@
 # commands/word_command.py
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes
 import random
 from QuizBot.tasks.vocab import VOCAB_RU_TO_HR, VOCAB_HR_TO_RU
 from QuizBot.progress_manager import _progress, get_user_data
 
 class WordCommand:
     @staticmethod
-    async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = update.effective_user
-        user_id = str(user.id)
-        user_data = get_user_data(_progress, user_id)
+    async def execute(update: Update, context):
+        user_data = get_user_data(_progress, str(update.effective_user.id))
         level = user_data["level"]
 
-        # Случайный выбор направления перевода
-        if random.choice([True, False]):
-            vocab = VOCAB_RU_TO_HR
-            direction = "ru_to_hr"
-            prefix = "Переведи на хорватский:\n\n«"
-            suffix = "»"
-        else:
-            vocab = VOCAB_HR_TO_RU
-            direction = "hr_to_ru"
-            prefix = "Переведи на русский:\n\n«"
-            suffix = "»"
+        vocab, direction, text = random.choice([
+            (VOCAB_RU_TO_HR, "ru_to_hr", "Переведи на хорватский:\n\n«"),
+            (VOCAB_HR_TO_RU, "hr_to_ru", "Переведи на русский:\n\n«")
+        ])
 
         words = vocab.get(level, [])
         if not words:
@@ -34,23 +24,21 @@ class WordCommand:
         available = [i for i in range(len(words)) if i not in learned]
 
         if not available:
-            await update.message.reply_text("Вы выучили все слова этого уровня!")
+            await update.message.reply_text("Вы выучили все слова!")
             return
 
         word_id = random.choice(available)
         word = words[word_id]
 
-        question = f"{prefix}{word['question']}{suffix}"
-        correct = word["correct"]
-        distractors = word["distractors"][:3]
+        options = [word["correct"]] + word["distractors"][:3]
+        random.shuffle(options)
 
-        all_options = [correct] + distractors
-        random.shuffle(all_options)
+        keyboard = [
+            [InlineKeyboardButton(opt, callback_data=f"word|{direction}|{level}|{word_id}|{opt}")]
+            for opt in options
+        ]
 
-        # ← ВАЖНО: callback_data с префиксом word|
-        keyboard = []
-        for opt in all_options:
-            cb = f"word|{direction}|{level}|{word_id}|{opt}"
-            keyboard.append([InlineKeyboardButton(opt, callback_data=cb)])
-
-        await update.message.reply_text(question, reply_markup=InlineKeyboardMarkup(keyboard))
+        await update.message.reply_text(
+            f"{text}{word['question']}»",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
