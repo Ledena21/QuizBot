@@ -1,63 +1,109 @@
-# vocab.py
-VOCAB = {
+# QuizBot/tasks/vocab.py
+
+VOCAB_HR_TO_RU = {
     "beginner": [
         {
-            "ru": "спасибо",
-            "hr": "hvala",
-            "distractors_ru": ["добрый", "хорошо", "рад"],
-            "distractors_hr": ["zahvaljujem", "dobro", "lijepo"]
+            "question": "hvala",
+            "correct": "спасибо",
+            "distractors": ["добрый", "хорошо", "рад"]
         },
         {
-            "ru": "пожалуйста",
-            "hr": "molim",
-            "distractors_ru": ["конечно", "ладно", "возьми"],
-            "distractors_hr": ["naravno", "uzmi", "dobro"]
+            "question": "molim",
+            "correct": "пожалуйста",
+            "distractors": ["конечно", "ладно", "возьми"]
         },
         {
-            "ru": "привет",
-            "hr": "bok",
-            "distractors_ru": ["пока", "здравствуйте", "добрый день"],
-            "distractors_hr": ["zdravo", "dobar dan", "cao"]
+            "question": "bok",
+            "correct": "привет",
+            "distractors": ["пока", "здравствуйте", "добрый день"]
         },
         {
-            "ru": "дом",
-            "hr": "kuća",
-            "distractors_ru": ["квартира", "здание", "комната"],
-            "distractors_hr": ["stan", "soba", "zgrada"]
+            "question": "kuća",
+            "correct": "дом",
+            "distractors": ["квартира", "здание", "комната"]
         }
     ],
-    "intermediate": [  # ← ДОБАВЬТЕ СЛОВА!
+    "intermediate": [
         {
-            "ru": "деньги",
-            "hr": "novac",
-            "distractors_ru": ["работа", "время", "цена"],
-            "distractors_hr": ["posao", "vrijeme", "cijena"]
+            "question": "novac",
+            "correct": "деньги",
+            "distractors": ["работа", "время", "цена"]
         },
         {
-            "ru": "работа",
-            "hr": "posao",
-            "distractors_ru": ["деньги", "время", "отпуск"],
-            "distractors_hr": ["novac", "vrijeme", "odmor"]
+            "question": "posao",
+            "correct": "работа",
+            "distractors": ["деньги", "время", "отпуск"]
         },
         {
-            "ru": "время",
-            "hr": "vrijeme",
-            "distractors_ru": ["часы", "день", "месяц"],
-            "distractors_hr": ["sat", "dan", "mjesec"]
+            "question": "vrijeme",
+            "correct": "время",
+            "distractors": ["часы", "день", "месяц"]
         },
         {
-            "ru": "мужчина",
-            "hr": "muškarac",
-            "distractors_ru": ["женщина", "ребёнок", "человек"],
-            "distractors_hr": ["žena", "dijete", "čovjek"]
+            "question": "muškarac",
+            "correct": "мужчина",
+            "distractors": ["женщина", "ребёнок", "человек"]
         }
     ],
-    "advanced": [  # ← можно добавить позже
+    "advanced": [
         {
-            "ru": "счастье",
-            "hr": "sreća",
-            "distractors_ru": ["любовь", "удача", "жизнь"],
-            "distractors_hr": ["ljubav", "sreća", "život"]
+            "question": "sreća",
+            "correct": "счастье",
+            "distractors": ["любовь", "удача", "жизнь"]
+        }
+    ]
+}
+
+VOCAB_RU_TO_HR = {
+    "beginner": [
+        {
+            "question": "спасибо",
+            "correct": "hvala",
+            "distractors": ["zahvaljujem", "dobro", "lijepo"]
+        },
+        {
+            "question": "пожалуйста",
+            "correct": "molim",
+            "distractors": ["naravno", "uzmi", "dobro"]
+        },
+        {
+            "question": "привет",
+            "correct": "bok",
+            "distractors": ["zdravo", "dobar dan", "cao"]
+        },
+        {
+            "question": "дом",
+            "correct": "kuća",
+            "distractors": ["stan", "soba", "zgrada"]
+        }
+    ],
+    "intermediate": [
+        {
+            "question": "деньги",
+            "correct": "novac",
+            "distractors": ["posao", "vrijeme", "cijena"]
+        },
+        {
+            "question": "работа",
+            "correct": "posao",
+            "distractors": ["novac", "vrijeme", "odmor"]
+        },
+        {
+            "question": "время",
+            "correct": "vrijeme",
+            "distractors": ["sat", "dan", "mjesec"]
+        },
+        {
+            "question": "мужчина",
+            "correct": "muškarac",
+            "distractors": ["žena", "dijete", "čovjek"]
+        }
+    ],
+    "advanced": [
+        {
+            "question": "счастье",
+            "correct": "sreća",
+            "distractors": ["ljubav", "sreća", "život"]
         }
     ]
 }

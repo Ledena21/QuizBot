@@ -2,55 +2,57 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import random
-from QuizBot.tasks.vocab import VOCAB
-from QuizBot.progress_manager import (
-    get_user_data,
-    is_level_complete,
-    save_progress,
-    _progress,
-    LEVELS
-)
+from QuizBot.tasks.vocab import VOCAB_RU_TO_HR, VOCAB_HR_TO_RU
+from QuizBot.progress_manager import _progress, get_user_data
 
 class WordCommand:
     @staticmethod
     async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        global _progress
         user = update.effective_user
         user_id = str(user.id)
         user_data = get_user_data(_progress, user_id)
         level = user_data["level"]
-        words = VOCAB.get(level, [])
 
+        # Случайный выбор направления перевода
+        if random.choice([True, False]):
+            vocab = VOCAB_RU_TO_HR
+            direction = "ru_to_hr"
+            prefix = "Переведи на хорватский:\n\n«"
+            suffix = "»"
+        else:
+            vocab = VOCAB_HR_TO_RU
+            direction = "hr_to_ru"
+            prefix = "Переведи на русский:\n\n«"
+            suffix = "»"
+
+        words = vocab.get(level, [])
         if not words:
             await update.message.reply_text("Нет слов на этом уровне.")
             return
 
-        learned_ids = user_data["progress"][level]
-        available = [i for i in range(len(words)) if i not in learned_ids]
+        learned = user_data["progress"][level]
+        available = [i for i in range(len(words)) if i not in learned]
 
         if not available:
-            await update.message.reply_text(
-                "Вы выучили все слова этого уровня! Напишите /word ещё раз, чтобы повторить."
-            )
+            await update.message.reply_text("Вы выучили все слова этого уровня!")
             return
 
         word_id = random.choice(available)
         word = words[word_id]
 
-        if random.choice([True, False]):
-            question = f"Переведи на хорватский:\n\n«{word['ru']}»"
-            correct = word["hr"]
-            distractors = word["distractors_hr"]
-        else:
-            question = f"Переведи на русский:\n\n«{word['hr']}»"
-            correct = word["ru"]
-            distractors = word["distractors_ru"]
+        # Формируем вопрос
+        question = f"{prefix}{word['question']}{suffix}"
+        correct = word["correct"]
+        distractors = word["distractors"][:3]
 
-        all_options = [correct] + distractors[:3]
+        all_options = [correct] + distractors
         random.shuffle(all_options)
 
-        context.user_data["current_word_correct"] = correct
+        # Сохраняем данные для проверки
         context.user_data["current_word_id"] = word_id
+        context.user_data["current_word_correct"] = correct
+        context.user_data["current_vocab_direction"] = direction
+        context.user_data["current_vocab_level"] = level
 
         keyboard = [[InlineKeyboardButton(opt, callback_data=opt)] for opt in all_options]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -59,6 +61,8 @@ class WordCommand:
 
     @staticmethod
     async def handle_word_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        from QuizBot.progress_manager import save_progress, LEVELS
+
         global _progress
         query = update.callback_query
         await query.answer()
@@ -69,19 +73,22 @@ class WordCommand:
 
         correct = context.user_data.get("current_word_correct")
         word_id = context.user_data.get("current_word_id")
-        current_level = user_data["level"]
+        level = context.user_data.get("current_vocab_level")
 
         user_data["stats"]["total_attempts"] += 1
 
         if query.data == correct:
             user_data["stats"]["total_correct"] += 1
-            user_data["progress"][current_level].add(word_id)
+            user_data["progress"][level].add(word_id)
 
-            if is_level_complete(user_data, current_level, VOCAB):
-                idx = LEVELS.index(current_level)
+            # Используем VOCAB_RU_TO_HR для подсчёта общего числа слов на уровне
+            from QuizBot.tasks.vocab import VOCAB_RU_TO_HR
+            total_words = len(VOCAB_RU_TO_HR[level])
+            if len(user_data["progress"][level]) == total_words:
+                idx = LEVELS.index(level)
                 if idx + 1 < len(LEVELS):
                     user_data["level"] = LEVELS[idx + 1]
-                    msg = f"✅ Уровень '{current_level}' завершён!\nТеперь вы на уровне: **{user_data['level'].upper()}**!"
+                    msg = f"✅ Уровень '{level}' завершён!\nТеперь вы на уровне: **{user_data['level'].upper()}**!"
                 else:
                     msg = "🏆 Поздравляем! Вы выучили все слова!"
             else:
