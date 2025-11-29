@@ -1,18 +1,25 @@
-# commands/word_command.py
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
-from QuizBot.tasks.vocab import VOCAB_RU_TO_HR, VOCAB_HR_TO_RU
+import telegram
 from QuizBot.progress_manager import _progress, get_user_data
+from QuizBot.progress_manager import save_progress, LEVELS
+from QuizBot.tasks.vocab import VOCAB_RU_TO_HR, VOCAB_HR_TO_RU
+from QuizBot.tasks.facts import FACTS
 
-@staticmethod
 async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from QuizBot.progress_manager import save_progress, LEVELS
-    from QuizBot.tasks.vocab import VOCAB_RU_TO_HR, VOCAB_HR_TO_RU
-    from QuizBot.tasks.facts import FACTS
-
     global _progress
     query = update.callback_query
-    await query.answer()
+
+    # Обрабатываем возможную ошибку "устаревшего" запроса
+    try:
+        await query.answer()
+    except telegram.error.BadRequest as e:
+        if "Query is too old" in str(e):
+            # Игнорируем устаревшие запросы
+            return
+        else:
+            # Пробрасываем другие ошибки
+            raise
 
     user = update.effective_user
     user_id = str(user.id)
@@ -66,6 +73,51 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Обновляем статистику
     user_data["stats"]["total_attempts"] += 1
 
+    # ПОЛУЧАЕМ ИСХОДНЫЙ ПОРЯДОК КНОПОК ИЗ СООБЩЕНИЯ
+    original_keyboard = query.message.reply_markup.inline_keyboard
+    original_options = []
+
+    for row in original_keyboard:
+        for button in row:
+            # Извлекаем текст кнопки без эмодзи (если они есть)
+            button_text = button.text
+            # Убираем эмодзи чтобы получить чистый текст опции
+            if button_text.startswith("✅ ") or button_text.startswith("❌ "):
+                button_text = button_text[2:]
+            original_options.append(button_text)
+
+    # СОЗДАЕМ ОБНОВЛЕННУЮ КЛАВИАТУРУ СОХРАНЯЯ ИСХОДНЫЙ ПОРЯДОК
+    new_keyboard = []
+
+    for option in original_options:
+        if option == user_choice:
+            # Выделяем выбранную кнопку
+            if user_choice == correct:
+                button_text = "✅ " + option
+            else:
+                button_text = "❌ " + option
+        elif option == correct and user_choice != correct:
+            # Показываем правильный ответ зеленым, если пользователь ошибся
+            button_text = "✅ " + option
+        else:
+            # Обычные кнопки
+            button_text = option
+
+        # Создаем кнопку с тем же callback_data что и в оригинале
+        if is_word:
+            callback_data = f"word|{direction}|{level}|{item_id}|{option}"
+        else:
+            callback_data = f"fact|{level}|{item_id}|{option}"
+
+        new_keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
+
+    # Обновляем сообщение с новой клавиатурой
+    try:
+        await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(new_keyboard))
+    except Exception as e:
+        print(f"Ошибка при обновлении клавиатуры: {e}")
+
+    # ПРОВЕРЯЕМ ПРАВИЛЬНОСТЬ ОТВЕТА И ОБНОВЛЯЕМ ПРОГРЕСС
     if user_choice == correct:
         user_data["stats"]["total_correct"] += 1
 
@@ -89,4 +141,5 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg = f"Неправильно.\nПравильный ответ: **{correct}**"
 
     save_progress(_progress)
-    await query.edit_message_text(msg, parse_mode="Markdown")
+
+    await query.message.reply_text(msg, parse_mode="Markdown")
