@@ -24,7 +24,7 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if data.startswith("word|"):
         parts = data.split("|", 5)
         if len(parts) != 5:
-            await query.edit_message_text("⚠️ Ошибка данных (слово).")
+            await query.edit_message_text("Ошибка данных (слово).")
             return
 
         _, direction, level, item_id_str, user_choice = parts
@@ -42,7 +42,7 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data.startswith("fact|"):
         parts = data.split("|", 4)
         if len(parts) != 4:
-            await query.edit_message_text("⚠️ Ошибка данных (факт).")
+            await query.edit_message_text("Ошибка данных (факт).")
             return
 
         _, level, item_id_str, user_choice = parts
@@ -53,12 +53,12 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         is_word = False
 
     else:
-        await query.edit_message_text("⚠️ Неизвестный тип запроса.")
+        await query.edit_message_text("Неизвестный тип запроса.")
         return
 
     # ОБЩАЯ ЛОГИКА ПРОВЕРКИ ОТВЕТА
     if level not in source or item_id >= len(source[level]):
-        await query.edit_message_text("⚠️ Элемент не найден.")
+        await query.edit_message_text("Элемент не найден.")
         return
 
     correct = source[level][item_id]["correct"]
@@ -78,15 +78,15 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 idx = LEVELS.index(level)
                 if idx + 1 < len(LEVELS):
                     user_data["level"] = LEVELS[idx + 1]
-                    msg = f"✅ Уровень '{level}' завершён!\nТеперь вы на уровне: **{user_data['level'].upper()}**!"
+                    msg = f"Уровень '{level}' завершён!\nТеперь вы на уровне: **{user_data['level'].upper()}**!"
                 else:
-                    msg = "🏆 Поздравляем! Вы выучили все слова!"
+                    msg = "Поздравляем! Вы выучили все слова!"
             else:
-                msg = "✅ Правильно! Молодец! 🎉"
+                msg = "Правильно!"
         else:
-            msg = "✅ Правильно! Отлично знаете факты! 🎉"
+            msg = "Правильно!"
     else:
-        msg = f"❌ Неправильно.\nПравильный ответ: **{correct}**"
+        msg = f"Неправильно.\nПравильный ответ: **{correct}**"
 
     save_progress(_progress)
     await query.edit_message_text(msg, parse_mode="Markdown")
