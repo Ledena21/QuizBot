@@ -40,7 +40,6 @@ class WordCommand:
         word_id = random.choice(available)
         word = words[word_id]
 
-        # Формируем вопрос
         question = f"{prefix}{word['question']}{suffix}"
         correct = word["correct"]
         distractors = word["distractors"][:3]
@@ -48,16 +47,13 @@ class WordCommand:
         all_options = [correct] + distractors
         random.shuffle(all_options)
 
-        # Сохраняем данные для проверки
-        context.user_data["current_word_id"] = word_id
-        context.user_data["current_word_correct"] = correct
-        context.user_data["current_vocab_direction"] = direction
-        context.user_data["current_vocab_level"] = level
+        # ← ВАЖНО: callback_data с префиксом word|
+        keyboard = []
+        for opt in all_options:
+            cb = f"word|{direction}|{level}|{word_id}|{opt}"
+            keyboard.append([InlineKeyboardButton(opt, callback_data=cb)])
 
-        keyboard = [[InlineKeyboardButton(opt, callback_data=opt)] for opt in all_options]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        await update.message.reply_text(question, reply_markup=reply_markup)
+        await update.message.reply_text(question, reply_markup=InlineKeyboardMarkup(keyboard))
 
     @staticmethod
     async def handle_word_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -67,23 +63,42 @@ class WordCommand:
         query = update.callback_query
         await query.answer()
 
+        data = query.data
+        parts = data.split("|", 5)
+        if len(parts) != 5:
+            await query.edit_message_text("⚠️ Некорректные данные.")
+            return
+
+        _, direction, level, word_id_str, user_choice = parts
+        word_id = int(word_id_str)
+
+        # Получаем правильный ответ из нужного словаря
+        if direction == "ru_to_hr":
+            from QuizBot.tasks.vocab import VOCAB_RU_TO_HR
+            vocab = VOCAB_RU_TO_HR
+        else:
+            from QuizBot.tasks.vocab import VOCAB_HR_TO_RU
+            vocab = VOCAB_HR_TO_RU
+
+        if level not in vocab or word_id >= len(vocab[level]):
+            await query.edit_message_text("⚠️ Слово не найдено.")
+            return
+
+        correct = vocab[level][word_id]["correct"]
+
+        # Обновляем прогресс и статистику
         user = update.effective_user
         user_id = str(user.id)
         user_data = get_user_data(_progress, user_id)
 
-        correct = context.user_data.get("current_word_correct")
-        word_id = context.user_data.get("current_word_id")
-        level = context.user_data.get("current_vocab_level")
-
         user_data["stats"]["total_attempts"] += 1
 
-        if query.data == correct:
+        if user_choice == correct:
             user_data["stats"]["total_correct"] += 1
             user_data["progress"][level].add(word_id)
 
-            # Используем VOCAB_RU_TO_HR для подсчёта общего числа слов на уровне
-            from QuizBot.tasks.vocab import VOCAB_RU_TO_HR
-            total_words = len(VOCAB_RU_TO_HR[level])
+            # Проверка завершения уровня
+            total_words = len(vocab[level])
             if len(user_data["progress"][level]) == total_words:
                 idx = LEVELS.index(level)
                 if idx + 1 < len(LEVELS):
