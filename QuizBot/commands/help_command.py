@@ -6,7 +6,7 @@ class HelpCommand:
     @staticmethod
     async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
-            "Доступные команды:\n"
+            "Используйте для взаимодействия с ботом следующие команды:\n"
             "/start — приветствие\n"
             "/help — справка\n"
             "/word — учить слово\n"
