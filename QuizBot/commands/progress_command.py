@@ -1,12 +1,16 @@
 # commands/progress_command.py
 from telegram import Update
-from QuizBot.tasks.vocab import VOCAB_RU_TO_HR
-from QuizBot.progress_manager import get_user_data, _progress
+from telegram.ext import ContextTypes
+from tasks.vocab import VOCAB_RU_TO_HR
+from progress_manager import get_user_data, _progress
+
+# commands/progress_command.py (в метод execute)
 
 class ProgressCommand:
     @staticmethod
-    async def execute(update: Update, context):
-        user_data = get_user_data(_progress, str(update.effective_user.id))
+    async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user_id = str(update.effective_user.id)
+        user_data = get_user_data(_progress, user_id)
         level = user_data["level"]
 
         learned = len(user_data["progress"].get(level, set()))
@@ -16,10 +20,14 @@ class ProgressCommand:
         attempts = user_data["stats"]["total_attempts"]
         accuracy = correct / attempts * 100 if attempts else 0
 
+        # Серия дней теперь хранится прямо в user_data (в прогрессе)
+        streak_days = user_data.get("reminder_streak_days", 0)
+
         await update.message.reply_text(
             f"Ваш прогресс:\n\n"
             f"Уровень: *{level}*\n"
             f"Слова: *{learned}/{total}*\n"
-            f"Точность: *{accuracy:.1f}%* ({correct}/{attempts})",
+            f"Точность: *{accuracy:.1f}%* ({correct}/{attempts})\n"
+            f"Серия дней без пропусков: *{streak_days}* дней",
             parse_mode="Markdown"
         )

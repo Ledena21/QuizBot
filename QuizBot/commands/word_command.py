@@ -1,13 +1,22 @@
 # commands/word_command.py
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 import random
-from QuizBot.tasks.vocab import VOCAB_RU_TO_HR, VOCAB_HR_TO_RU
-from QuizBot.progress_manager import _progress, get_user_data
+from tasks.vocab import VOCAB_RU_TO_HR, VOCAB_HR_TO_RU
+from progress_manager import _progress, get_user_data
+from telegram.ext import ContextTypes
 
 class WordCommand:
     @staticmethod
-    async def execute(update: Update, context):
-        user_data = get_user_data(_progress, str(update.effective_user.id))
+    async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Вызывается как команда /word (через сообщение)."""
+        user_id = str(update.effective_user.id)
+        chat_id = update.effective_chat.id
+        await WordCommand._send_word_question(context.bot, chat_id, user_id)
+
+    @staticmethod
+    async def _send_word_question(bot, chat_id: int, user_id: str):
+        """Основная логика — отправка вопроса по chat_id и user_id."""
+        user_data = get_user_data(_progress, user_id)
         level = user_data["level"]
 
         vocab, direction, text = random.choice([
@@ -17,14 +26,13 @@ class WordCommand:
 
         words = vocab.get(level, [])
         if not words:
-            await update.message.reply_text("Нет слов на этом уровне.")
+            await bot.send_message(chat_id=chat_id, text="Нет слов на этом уровне.")
             return
 
         learned = user_data["progress"][level]
         available = [i for i in range(len(words)) if i not in learned]
-
         if not available:
-            await update.message.reply_text("Вы выучили все слова!")
+            await bot.send_message(chat_id=chat_id, text="Вы выучили все слова!")
             return
 
         word_id = random.choice(available)
@@ -38,7 +46,8 @@ class WordCommand:
             for opt in options
         ]
 
-        await update.message.reply_text(
-            f"{text}{word['question']}»",
+        await bot.send_message(
+            chat_id=chat_id,
+            text=f"{text}{word['question']}»",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )

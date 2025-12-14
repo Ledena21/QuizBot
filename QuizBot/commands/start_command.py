@@ -1,10 +1,15 @@
 # start_command.py
 from telegram import Update
 from telegram.ext import ContextTypes
+from progress_manager import get_user_data, _progress
 
 class StartCommand:
     @staticmethod
     async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        # Гарантируем, что пользователь есть в _progress
+        user_id = str(update.effective_user.id)
+        get_user_data(_progress, user_id)  # ← создаёт запись, если её нет
+
         await update.message.reply_text(
             "Я - бот для изучения хорватского языка 🇭🇷\n"
             "Напиши /help, чтобы увидеть справку.\n"

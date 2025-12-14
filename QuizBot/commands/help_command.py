@@ -1,4 +1,3 @@
-# commands/help_command.py
 from telegram import Update
 from telegram.ext import ContextTypes
 

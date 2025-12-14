@@ -61,6 +61,12 @@ def get_user_data(progress_dict: dict, user_id: str) -> dict:
         if level not in user_data["progress"]:
             user_data["progress"][level] = set()
 
+    # Добавляем поля для статистики по напоминаниям, если их нет
+    if "reminder_skip_count" not in user_data:
+        user_data["reminder_skip_count"] = 0
+    if "streak_days" not in user_data:
+        user_data["streak_days"] = 0
+
     return user_data
 
 def is_level_complete(user_data: dict, level: str, vocab: dict) -> bool:
