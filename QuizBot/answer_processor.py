@@ -6,7 +6,7 @@ import telegram
 from progress_manager import _progress, get_user_data, save_progress, LEVELS
 from tasks.vocab import VOCAB_RU_TO_HR, VOCAB_HR_TO_RU
 from tasks.facts import FACTS
-from commands.reminder_command import ReminderCommand  # ← для отправки следующего вопроса
+from commands.reminder_command import ReminderCommand
 
 
 async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -57,8 +57,6 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     correct_answer = source[level][item_id]["correct"]
     user_data["stats"]["total_attempts"] += 1
-
-    # Получаем исходные опции
     original_keyboard = query.message.reply_markup.inline_keyboard
     original_options = []
     for row in original_keyboard:
@@ -68,7 +66,6 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text = text[2:]
             original_options.append(text)
 
-    # Создаём обновлённую клавиатуру
     new_keyboard = []
     for option in original_options:
         if option == user_choice:
@@ -89,7 +86,6 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         print(f"Ошибка обновления клавиатуры: {e}")
 
-    # === ОБНОВЛЯЕМ СТАТИСТИКУ ===
     is_correct = (user_choice == correct_answer)
     if is_correct:
         user_data["stats"]["total_correct"] += 1
@@ -100,24 +96,19 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 idx = LEVELS.index(level)
                 if idx + 1 < len(LEVELS):
                     user_data["level"] = LEVELS[idx + 1]
-                # msg будет обработан ниже, если не в сессии
-        # msg для обычного режима
         msg = "Правильно!"
     else:
         msg = f"Неправильно.\nПравильный ответ: **{correct_answer}**"
 
     save_progress(_progress)
 
-    # === ПРОВЕРКА: В СЕССИИ ТЕСТА? ===
     session = user_data.get("test_session")
     if session is not None:
-        # Обновляем счётчик правильных ответов
         if is_correct:
             session["correct_count"] += 1
         session["current"] += 1
         save_progress(_progress)
 
-        # Отправляем следующий вопрос (или завершаем)
         await ReminderCommand._send_next_test_question(
             context.bot,
             update.effective_chat.id,

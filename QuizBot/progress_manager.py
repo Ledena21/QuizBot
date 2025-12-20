@@ -12,12 +12,11 @@ def load_progress() -> Dict[str, dict]:
             with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 for user_id, user_data in data.items():
-                    if "progress" in user_data:  # ← исправлено: user_data, а не user_
+                    if "progress" in user_data:
                         user_data["progress"] = {
                             level: set(ids) for level, ids in user_data["progress"].items()
                         }
-                    # Гарантируем наличие всех уровней
-                    if "progress" not in user_data:  # ← исправлено
+                    if "progress" not in user_data:
                         user_data["progress"] = {}
                     for level in LEVELS:
                         if level not in user_data["progress"]:
@@ -31,7 +30,7 @@ def load_progress() -> Dict[str, dict]:
 def save_progress(data: Dict[str, dict]):
     serializable = {}
     for user_id, user_data in data.items():
-        if "progress" not in user_data:  # ← исправлено
+        if "progress" not in user_data:
             user_data["progress"] = {}
         for level in LEVELS:
             if level not in user_data["progress"]:
@@ -60,8 +59,6 @@ def get_user_data(progress_dict: dict, user_id: str) -> dict:
     for level in LEVELS:
         if level not in user_data["progress"]:
             user_data["progress"][level] = set()
-
-    # Добавляем поля для статистики по напоминаниям, если их нет
     if "reminder_skip_count" not in user_data:
         user_data["reminder_skip_count"] = 0
     if "streak_days" not in user_data:

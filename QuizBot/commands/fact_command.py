@@ -8,14 +8,12 @@ from telegram.ext import ContextTypes
 class FactCommand:
     @staticmethod
     async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Вызывается как команда /fact (через сообщение)."""
         user_id = str(update.effective_user.id)
         chat_id = update.effective_chat.id
         await FactCommand._send_fact_question(context.bot, chat_id, user_id)
 
     @staticmethod
     async def _send_fact_question(bot, chat_id: int, user_id: str):
-        """Основная логика — отправка факта по chat_id и user_id."""
         user_data = get_user_data(_progress, user_id)
         facts = FACTS.get(user_data["level"], [])
 

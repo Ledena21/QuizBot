@@ -8,14 +8,12 @@ from telegram.ext import ContextTypes
 class WordCommand:
     @staticmethod
     async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Вызывается как команда /word (через сообщение)."""
         user_id = str(update.effective_user.id)
         chat_id = update.effective_chat.id
         await WordCommand._send_word_question(context.bot, chat_id, user_id)
 
     @staticmethod
     async def _send_word_question(bot, chat_id: int, user_id: str):
-        """Основная логика — отправка вопроса по chat_id и user_id."""
         user_data = get_user_data(_progress, user_id)
         level = user_data["level"]
 
@@ -32,7 +30,7 @@ class WordCommand:
         learned = user_data["progress"][level]
         available = [i for i in range(len(words)) if i not in learned]
         if not available:
-            await bot.send_message(chat_id=chat_id, text="Вы выучили все слова!")
+            await bot.send_message(chat_id=chat_id, text="Вы выучили все слова! Чтобы начать заново, дайте команду /restart")
             return
 
         word_id = random.choice(available)

@@ -4,8 +4,6 @@ from telegram.ext import ContextTypes
 from tasks.vocab import VOCAB_RU_TO_HR
 from progress_manager import get_user_data, _progress
 
-# commands/progress_command.py (в метод execute)
-
 class ProgressCommand:
     @staticmethod
     async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -19,8 +17,6 @@ class ProgressCommand:
         correct = user_data["stats"]["total_correct"]
         attempts = user_data["stats"]["total_attempts"]
         accuracy = correct / attempts * 100 if attempts else 0
-
-        # Серия дней теперь хранится прямо в user_data (в прогрессе)
         streak_days = user_data.get("reminder_streak_days", 0)
 
         await update.message.reply_text(
