@@ -1,5 +1,3 @@
-# answer_processor.py
-
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import telegram
@@ -25,7 +23,6 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_data = get_user_data(_progress, user_id)
     data = query.data
 
-    # === ОБРАБОТКА ПОДСКАЗКИ ===
     if data.startswith("fact_advice|"):
         parts = data.split("|", 3)
         if len(parts) != 3:
@@ -61,8 +58,8 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if opt_index < 0 or opt_index >= len(options):
             await query.edit_message_text("Ошибка: вариант ответа не существует.")
             return
-        user_choice = options[opt_index]
-        correct_answer = item["correct"]
+        userchoice = options[opt_index]
+        correct = item["correct"]
         is_word = True
 
     elif data.startswith("fact|"):
@@ -81,8 +78,8 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if opt_index < 0 or opt_index >= len(options):
             await query.edit_message_text("Ошибка: вариант ответа не существует.")
             return
-        user_choice = options[opt_index]
-        correct_answer = item["correct"]
+        userchoice = options[opt_index]
+        correct = item["correct"]
         is_word = False
         vocab = None
 
@@ -103,9 +100,9 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     new_keyboard = []
     for i, text in enumerate(original_texts):
-        if text == user_choice:
-            btn_text = "✅ " + text if user_choice == correct_answer else "❌ " + text
-        elif text == correct_answer and user_choice != correct_answer:
+        if text == userchoice:
+            btn_text = "✅ " + text if userchoice == correct else "❌ " + text
+        elif text == correct and userchoice != correct:
             btn_text = "✅ " + text
         else:
             btn_text = text
@@ -115,7 +112,6 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             callback_data = f"fact|{level}|{item_id}|{i}"
         new_keyboard.append([InlineKeyboardButton(btn_text, callback_data=callback_data)])
 
-    # Добавляем кнопку "Подсказка" ТОЛЬКО для фактов
     if not is_word:
         new_keyboard.append([InlineKeyboardButton("Подсказка", callback_data=f"fact_advice|{level}|{item_id}")])
 
@@ -125,7 +121,7 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(f"Ошибка обновления клавиатуры: {e}")
 
     user_data["stats"]["total_attempts"] += 1  # ← ВСЕГДА увеличиваем попытки
-    is_correct = (user_choice == correct_answer)
+    is_correct = (userchoice == correct)
     if is_correct:
         user_data["stats"]["total_correct"] += 1
         if is_word:
@@ -137,11 +133,10 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     user_data["level"] = LEVELS[idx + 1]
         msg = "Правильно!"
     else:
-        msg = f"Неправильно.\nПравильный ответ: **{correct_answer}**"
+        msg = f"Неправильно.\nПравильный ответ: **{correct}**"
 
     save_progress(_progress)
 
-    # === ТЕСТ-СЕССИЯ ===
     session = user_data.get("test_session")
     if session is not None:
         if is_correct:

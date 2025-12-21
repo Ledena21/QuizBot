@@ -1,4 +1,3 @@
-# command_processor.py
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 from commands.start_command import StartCommand
@@ -15,7 +14,6 @@ class CommandProcessor:
         self.app = application  # сохраняем как self.app
 
     def register_all(self):
-        # Используем self.app везде (не self.application!)
         self.app.add_handler(CommandHandler("start", StartCommand.execute))
         self.app.add_handler(CommandHandler("help", HelpCommand.execute))
         self.app.add_handler(CommandHandler("word", WordCommand.execute))
@@ -26,6 +24,7 @@ class CommandProcessor:
         self.app.add_handler(CallbackQueryHandler(handle_answer, pattern=r"^(word|fact)\|"))
         self.app.add_handler(CallbackQueryHandler(handle_answer, pattern=r"^fact_advice\|"))
         self.app.add_handler(CallbackQueryHandler(ReminderCommand.handle_reminder_callback, pattern=r"^reminder_"))
+        self.app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, self.handle_messages))
 
-    async def handle_any_text(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def handle_messages(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await HelpCommand.execute(update, context)

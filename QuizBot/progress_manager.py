@@ -1,12 +1,10 @@
-# progress_manager.py
 import json
 import os
-from typing import Dict, Set
 
 PROGRESS_FILE = "user_progress.json"
 LEVELS = ["beginner", "intermediate", "advanced"]
 
-def load_progress() -> Dict[str, dict]:
+def load_progress():
     if os.path.exists(PROGRESS_FILE):
         try:
             with open(PROGRESS_FILE, "r", encoding="utf-8") as f:
@@ -27,7 +25,7 @@ def load_progress() -> Dict[str, dict]:
             return {}
     return {}
 
-def save_progress(data: Dict[str, dict]):
+def save_progress(data):
     serializable = {}
     for user_id, user_data in data.items():
         if "progress" not in user_data:
@@ -46,7 +44,7 @@ def save_progress(data: Dict[str, dict]):
     with open(PROGRESS_FILE, "w", encoding="utf-8") as f:
         json.dump(serializable, f, ensure_ascii=False, indent=2)
 
-def get_user_data(progress_dict: dict, user_id: str) -> dict:
+def get_user_data(progress_dict, user_id):
     if user_id not in progress_dict:
         progress_dict[user_id] = {
             "level": "beginner",
@@ -66,7 +64,7 @@ def get_user_data(progress_dict: dict, user_id: str) -> dict:
 
     return user_data
 
-def is_level_complete(user_data: dict, level: str, vocab: dict) -> bool:
+def complete_level(user_data, level, vocab):
     words = vocab.get(level, [])
     learned = user_data["progress"].get(level, set())
     return len(learned) >= len(words) and len(words) > 0

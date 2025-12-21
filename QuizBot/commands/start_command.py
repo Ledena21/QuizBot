@@ -1,4 +1,3 @@
-# start_command.py
 from telegram import Update
 from telegram.ext import ContextTypes
 from progress_manager import get_user_data, _progress

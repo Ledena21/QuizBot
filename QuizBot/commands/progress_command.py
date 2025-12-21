@@ -1,4 +1,3 @@
-# commands/progress_command.py
 from telegram import Update
 from telegram.ext import ContextTypes
 from tasks.vocab import VOCAB_RU_TO_HR

@@ -1,5 +1,3 @@
-# commands/fact_command.py
-
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 import random
 from tasks.facts import FACTS
@@ -23,15 +21,14 @@ class FactCommand:
         fact = random.choice(facts)
         options = [fact["correct"]] + fact["distractors"][:3]
 
-        fact_index = FACTS[user_data["level"]].index(fact)
+        ifact_ = FACTS[user_data["level"]].index(fact)
 
         keyboard = []
-        for idx in range(len(options)):
-            callback_data = f"fact|{user_data['level']}|{fact_index}|{idx}"
-            keyboard.append([InlineKeyboardButton(options[idx], callback_data=callback_data)])
+        for i in range(len(options)):
+            callback_data = f"fact|{user_data['level']}|{ifact_}|{i}"
+            keyboard.append([InlineKeyboardButton(options[i], callback_data=callback_data)])
 
-        # Кнопка "Подсказка"
-        keyboard.append([InlineKeyboardButton("Подсказка", callback_data=f"fact_advice|{user_data['level']}|{fact_index}")])
+        keyboard.append([InlineKeyboardButton("Подсказка", callback_data=f"fact_advice|{user_data['level']}|{ifact_}")])
 
         await bot.send_message(
             chat_id=chat_id,

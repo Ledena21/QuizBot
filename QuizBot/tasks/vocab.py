@@ -1,5 +1,3 @@
-# QuizBot/tasks/vocab.py
-
 VOCAB_HR_TO_RU = {
     "beginner": [
         {

@@ -13,6 +13,6 @@ try:
         print("Переменная BOT_TOKEN не задана")
 
     bot = Bot(token=BOT_TOKEN)
-    bot.start_polling()
+    bot.polling()
 except Exception as e:
     print(f'Error: {e}')

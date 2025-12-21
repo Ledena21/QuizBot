@@ -1,5 +1,3 @@
-# tasks/facts.py
-
 FACTS = {
     "beginner": [
         {

@@ -1,4 +1,3 @@
-# commands/word_command.py
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 import random
 from tasks.vocab import VOCAB_RU_TO_HR, VOCAB_HR_TO_RU
@@ -38,7 +37,6 @@ class WordCommand:
             callback_data = f"word|{direction}|{level}|{item_id}|{idx}"
             keyboard.append([InlineKeyboardButton(options[idx], callback_data=callback_data)])
 
-        # Определяем текст вопроса
         question_text = item["question"]
         await bot.send_message(
             chat_id=chat_id,
