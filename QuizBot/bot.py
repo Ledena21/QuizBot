@@ -14,29 +14,29 @@ class Bot:
         self.processor.register_all()
 
     async def _reminder_loop(self):
-        target_times = [
-            (21,6),
+        time = [
+            (12,16),
             (21, 9),
             (21, 5),
             (21, 3),
             (21, 7),
             (21, 12),
         ]
-        last_sent = set()
+        sent = set()
 
         while True:
             now = datetime.now()
-            current_day = now.date()
-            current_hour = now.hour
-            current_minute = now.minute
+            nowday = now.date()
+            nowhour = now.hour
+            nowmin = now.minute
 
-            for hour, minute in target_times:
-                if current_hour == hour and current_minute == minute:
-                    key = (current_day, hour, minute)
-                    if key not in last_sent:
-                        print(f"[Напоминание] Отправка в {hour:02d}:{minute:02d}")
+            for hour, min in time:
+                if nowhour == hour and nowmin == min:
+                    key = (nowday, hour, min)
+                    if key not in sent:
+                        print(f"[Напоминание] Отправка в {hour:02d}:{min:02d}")
                         await self._send_reminders_to_all_users()
-                        last_sent.add(key)
+                        sent.add(key)
                         break
 
             await asyncio.sleep(60)

@@ -12,7 +12,6 @@ from commands.reminder_command import ReminderCommand
 async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.callback_query is None:
         return
-
     query = update.callback_query
     try:
         await query.answer()
@@ -45,7 +44,6 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text(f"{advice}", parse_mode="Markdown")
         return
 
-    # === ОБРАБОТКА ОТВЕТОВ ===
     if data.startswith("word|"):
         parts = data.split("|", 5)
         if len(parts) != 5:
@@ -54,7 +52,6 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, direction, level, item_id_str, opt_index_str = parts
         item_id = int(item_id_str)
         opt_index = int(opt_index_str)
-
         vocab = VOCAB_RU_TO_HR if direction == "ru_to_hr" else VOCAB_HR_TO_RU
         if level not in vocab or item_id >= len(vocab[level]):
             await query.edit_message_text("Слово не найдено.")
@@ -76,7 +73,6 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, level, item_id_str, opt_index_str = parts
         item_id = int(item_id_str)
         opt_index = int(opt_index_str)
-
         if level not in FACTS or item_id >= len(FACTS[level]):
             await query.edit_message_text("Факт не найден.")
             return
@@ -94,22 +90,17 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("Неизвестный тип запроса.")
         return
 
-    # === ОБНОВЛЕНИЕ КЛАВИАТУРЫ ===
     original_keyboard = query.message.reply_markup.inline_keyboard
     original_texts = []
-
-    # Извлекаем ТОЛЬКО тексты вариантов, пропуская "Подсказка"
     for row in original_keyboard:
         btn = row[0]
         text = btn.text
         if text.startswith(("✅ ", "❌ ")):
             text = text[2:]
-        # ⚠️ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: пропускаем кнопку "Подсказка"
         if text == "Подсказка":
             continue
         original_texts.append(text)
 
-    # Создаём новую клавиатуру только с вариантами
     new_keyboard = []
     for i, text in enumerate(original_texts):
         if text == user_choice:
@@ -118,14 +109,13 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             btn_text = "✅ " + text
         else:
             btn_text = text
-
         if is_word:
             callback_data = f"word|{direction}|{level}|{item_id}|{i}"
         else:
             callback_data = f"fact|{level}|{item_id}|{i}"
         new_keyboard.append([InlineKeyboardButton(btn_text, callback_data=callback_data)])
 
-    # Добавляем кнопку "Подсказка" ТОЛЬКО для фактов — и ТОЛЬКО ОДИН РАЗ
+    # Добавляем кнопку "Подсказка" ТОЛЬКО для фактов
     if not is_word:
         new_keyboard.append([InlineKeyboardButton("Подсказка", callback_data=f"fact_advice|{level}|{item_id}")])
 
@@ -134,7 +124,7 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         print(f"Ошибка обновления клавиатуры: {e}")
 
-    # === СТАТИСТИКА И ПРОГРЕСС ===
+    user_data["stats"]["total_attempts"] += 1  # ← ВСЕГДА увеличиваем попытки
     is_correct = (user_choice == correct_answer)
     if is_correct:
         user_data["stats"]["total_correct"] += 1
@@ -158,7 +148,6 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             session["correct_count"] += 1
         session["current"] += 1
         save_progress(_progress)
-
         await ReminderCommand._send_next_test_question(
             context.bot,
             update.effective_chat.id,
