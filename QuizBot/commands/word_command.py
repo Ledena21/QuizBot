@@ -10,42 +10,38 @@ class WordCommand:
     async def execute(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = str(update.effective_user.id)
         chat_id = update.effective_chat.id
-        await WordCommand._send_word_question(context.bot, chat_id, user_id)
+        await WordCommand._send_word_question(context.bot, chat_id, user_id, "ru_to_hr")
 
     @staticmethod
-    async def _send_word_question(bot, chat_id: int, user_id: str):
+    async def _send_word_question(bot, chat_id: int, user_id: str, direction: str):
         user_data = get_user_data(_progress, user_id)
         level = user_data["level"]
-
-        vocab, direction, text = random.choice([
-            (VOCAB_RU_TO_HR, "ru_to_hr", "Переведи на хорватский:\n\n«"),
-            (VOCAB_HR_TO_RU, "hr_to_ru", "Переведи на русский:\n\n«")
-        ])
-
+        vocab = VOCAB_RU_TO_HR if direction == "ru_to_hr" else VOCAB_HR_TO_RU
         words = vocab.get(level, [])
         if not words:
-            await bot.send_message(chat_id=chat_id, text="Нет слов на этом уровне.")
+            await bot.send_message(chat_id=chat_id, text="Нет слов для этого уровня.")
             return
 
-        learned = user_data["progress"][level]
+        learned = set(user_data["progress"][level])
         available = [i for i in range(len(words)) if i not in learned]
         if not available:
-            await bot.send_message(chat_id=chat_id, text="Вы выучили все слова! Чтобы начать заново, дайте команду /restart")
+            await bot.send_message(chat_id=chat_id, text="Все слова выучены! Попробуйте следующий уровень.")
             return
 
-        word_id = random.choice(available)
-        word = words[word_id]
+        item_id = random.choice(available)
+        item = words[item_id]
 
-        options = [word["correct"]] + word["distractors"][:3]
-        random.shuffle(options)
+        options = [item["correct"]] + item["distractors"][:3]
 
-        keyboard = [
-            [InlineKeyboardButton(opt, callback_data=f"word|{direction}|{level}|{word_id}|{opt}")]
-            for opt in options
-        ]
+        keyboard = []
+        for idx in range(len(options)):
+            callback_data = f"word|{direction}|{level}|{item_id}|{idx}"
+            keyboard.append([InlineKeyboardButton(options[idx], callback_data=callback_data)])
 
+        # Определяем текст вопроса
+        question_text = item["question"]
         await bot.send_message(
             chat_id=chat_id,
-            text=f"{text}{word['question']}»",
+            text=f"Слово:\n{question_text}",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )

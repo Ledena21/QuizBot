@@ -24,6 +24,7 @@ class CommandProcessor:
         self.app.add_handler(CommandHandler("restart", RestartCommand.execute))
 
         self.app.add_handler(CallbackQueryHandler(handle_answer, pattern=r"^(word|fact)\|"))
+        self.app.add_handler(CallbackQueryHandler(handle_answer, pattern=r"^fact_advice\|"))
         self.app.add_handler(CallbackQueryHandler(ReminderCommand.handle_reminder_callback, pattern=r"^reminder_"))
 
     async def handle_any_text(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

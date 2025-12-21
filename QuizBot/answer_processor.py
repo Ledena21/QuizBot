@@ -10,9 +10,10 @@ from commands.reminder_command import ReminderCommand
 
 
 async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global _progress
-    query = update.callback_query
+    if update.callback_query is None:
+        return
 
+    query = update.callback_query
     try:
         await query.answer()
     except telegram.error.BadRequest as e:
@@ -25,25 +26,67 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_data = get_user_data(_progress, user_id)
     data = query.data
 
+    # === ОБРАБОТКА ПОДСКАЗКИ ===
+    if data.startswith("fact_advice|"):
+        parts = data.split("|", 3)
+        if len(parts) != 3:
+            await query.edit_message_text("Ошибка данных (подсказка).")
+            return
+        _, level, item_id_str = parts
+        try:
+            item_id = int(item_id_str)
+        except ValueError:
+            await query.edit_message_text("Некорректный ID факта.")
+            return
+        if level not in FACTS or item_id >= len(FACTS[level]):
+            await query.edit_message_text("Факт не найден.")
+            return
+        advice = FACTS[level][item_id].get("advice", "Подсказка недоступна.")
+        await query.message.reply_text(f"{advice}", parse_mode="Markdown")
+        return
+
+    # === ОБРАБОТКА ОТВЕТОВ ===
     if data.startswith("word|"):
         parts = data.split("|", 5)
         if len(parts) != 5:
             await query.edit_message_text("Ошибка данных (слово).")
             return
-        _, direction, level, item_id_str, user_choice = parts
+        _, direction, level, item_id_str, opt_index_str = parts
         item_id = int(item_id_str)
+        opt_index = int(opt_index_str)
+
         vocab = VOCAB_RU_TO_HR if direction == "ru_to_hr" else VOCAB_HR_TO_RU
+        if level not in vocab or item_id >= len(vocab[level]):
+            await query.edit_message_text("Слово не найдено.")
+            return
+        item = vocab[level][item_id]
+        options = [item["correct"]] + item["distractors"][:3]
+        if opt_index < 0 or opt_index >= len(options):
+            await query.edit_message_text("Ошибка: вариант ответа не существует.")
+            return
+        user_choice = options[opt_index]
+        correct_answer = item["correct"]
         is_word = True
-        source = vocab
 
     elif data.startswith("fact|"):
         parts = data.split("|", 4)
         if len(parts) != 4:
             await query.edit_message_text("Ошибка данных (факт).")
             return
-        _, level, item_id_str, user_choice = parts
+        _, level, item_id_str, opt_index_str = parts
         item_id = int(item_id_str)
-        source = FACTS
+        opt_index = int(opt_index_str)
+
+        if level not in FACTS or item_id >= len(FACTS[level]):
+            await query.edit_message_text("Факт не найден.")
+            return
+        item = FACTS[level][item_id]
+        options = [item["correct"]] + item["distractors"][:3]
+        if opt_index < 0 or opt_index >= len(options):
+            await query.edit_message_text("Ошибка: вариант ответа не существует.")
+            return
+        user_choice = options[opt_index]
+        correct_answer = item["correct"]
         is_word = False
         vocab = None
 
@@ -51,41 +94,47 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("Неизвестный тип запроса.")
         return
 
-    if level not in source or item_id >= len(source[level]):
-        await query.edit_message_text("Элемент не найден.")
-        return
-
-    correct_answer = source[level][item_id]["correct"]
-    user_data["stats"]["total_attempts"] += 1
+    # === ОБНОВЛЕНИЕ КЛАВИАТУРЫ ===
     original_keyboard = query.message.reply_markup.inline_keyboard
-    original_options = []
-    for row in original_keyboard:
-        for button in row:
-            text = button.text
-            if text.startswith("✅ ") or text.startswith("❌ "):
-                text = text[2:]
-            original_options.append(text)
+    original_texts = []
 
+    # Извлекаем ТОЛЬКО тексты вариантов, пропуская "Подсказка"
+    for row in original_keyboard:
+        btn = row[0]
+        text = btn.text
+        if text.startswith(("✅ ", "❌ ")):
+            text = text[2:]
+        # ⚠️ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: пропускаем кнопку "Подсказка"
+        if text == "Подсказка":
+            continue
+        original_texts.append(text)
+
+    # Создаём новую клавиатуру только с вариантами
     new_keyboard = []
-    for option in original_options:
-        if option == user_choice:
-            btn_text = "✅ " + option if user_choice == correct_answer else "❌ " + option
-        elif option == correct_answer and user_choice != correct_answer:
-            btn_text = "✅ " + option
+    for i, text in enumerate(original_texts):
+        if text == user_choice:
+            btn_text = "✅ " + text if user_choice == correct_answer else "❌ " + text
+        elif text == correct_answer and user_choice != correct_answer:
+            btn_text = "✅ " + text
         else:
-            btn_text = option
+            btn_text = text
 
         if is_word:
-            callback_data = f"word|{direction}|{level}|{item_id}|{option}"
+            callback_data = f"word|{direction}|{level}|{item_id}|{i}"
         else:
-            callback_data = f"fact|{level}|{item_id}|{option}"
+            callback_data = f"fact|{level}|{item_id}|{i}"
         new_keyboard.append([InlineKeyboardButton(btn_text, callback_data=callback_data)])
+
+    # Добавляем кнопку "Подсказка" ТОЛЬКО для фактов — и ТОЛЬКО ОДИН РАЗ
+    if not is_word:
+        new_keyboard.append([InlineKeyboardButton("Подсказка", callback_data=f"fact_advice|{level}|{item_id}")])
 
     try:
         await query.edit_message_reply_markup(reply_markup=InlineKeyboardMarkup(new_keyboard))
     except Exception as e:
         print(f"Ошибка обновления клавиатуры: {e}")
 
+    # === СТАТИСТИКА И ПРОГРЕСС ===
     is_correct = (user_choice == correct_answer)
     if is_correct:
         user_data["stats"]["total_correct"] += 1
@@ -102,6 +151,7 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     save_progress(_progress)
 
+    # === ТЕСТ-СЕССИЯ ===
     session = user_data.get("test_session")
     if session is not None:
         if is_correct:
@@ -115,5 +165,4 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user_id
         )
     else:
-        # Обычный режим — показываем результат
         await query.message.reply_text(msg, parse_mode="Markdown")

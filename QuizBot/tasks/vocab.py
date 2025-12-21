@@ -20,7 +20,7 @@ VOCAB_HR_TO_RU = {
         {
             "question": "voda",
             "correct": "вода",
-            "distractors": ["огонь", "сок", "молоко"]
+            "distractors": ["земля", "сок", "молоко"]
         },
         {
             "question": "kava",
@@ -28,7 +28,7 @@ VOCAB_HR_TO_RU = {
             "distractors": ["чай", "суп", "вино"]
         },
         {
-            "question": "hljeb",
+            "question": "kruh",
             "correct": "хлеб",
             "distractors": ["сыр", "масло", "яйцо"]
         },
@@ -38,9 +38,9 @@ VOCAB_HR_TO_RU = {
             "distractors": ["груша", "банан", "апельсин"]
         },
         {
-            "question": "auto",
-            "correct": "машина",
-            "distractors": ["велосипед", "поезд", "автобус"]
+            "question": "tražiti",
+            "correct": "искать",
+            "distractors": ["транжирить", "идти", "кашлять"]
         },
         {
             "question": "stol",
@@ -230,9 +230,9 @@ VOCAB_HR_TO_RU = {
             "distractors": ["ненавидеть", "игнорировать", "жалеть"]
         },
         {
-            "question": "smatrati",
-            "correct": "считать (иметь мнение)",
-            "distractors": ["думать", "говорить", "молчать"]
+            "question": "misliti",
+            "correct": "думать",
+            "distractors": ["вычислять", "говорить", "молчать"]
         }
     ],
     "advanced": [
@@ -349,10 +349,12 @@ VOCAB_HR_TO_RU = {
         {
             "question": "naprasno",
             "correct": "неожиданно",
-            "distractors": ["внезапно", "вдруг", "напрасно"]
+            "distractors": ["предсказуемо", "полезно", "напрасно"]
         },
     ]
 }
+
+
 
 VOCAB_RU_TO_HR = {
     "beginner": [
@@ -384,7 +386,7 @@ VOCAB_RU_TO_HR = {
         {
             "question": "хлеб",
             "correct": "kruh",
-            "distractors": ["sir", "maslac", "jaje"]
+            "distractors": ["hleb", "maslac", "jaje"]
         },
         {
             "question": "яблоко",
@@ -392,9 +394,9 @@ VOCAB_RU_TO_HR = {
             "distractors": ["kruška", "banana", "naranča"]
         },
         {
-            "question": "машина",
-            "correct": "auto",
-            "distractors": ["bicikl", "vlak", "autobus"]
+            "question": "искать",
+            "correct": "tražiti",
+            "distractors": ["zaboraviti", "ogrepsti", "izgubiti"]
         },
         {
             "question": "стол",
@@ -584,7 +586,7 @@ VOCAB_RU_TO_HR = {
             "distractors": ["mrziti", "ignorirati", "žaliti"]
         },
         {
-            "question": "считать",
+            "question": "думать",
             "correct": "smatrati",
             "distractors": ["misliti", "govoriti", "šutjeti"]
         }
@@ -698,7 +700,7 @@ VOCAB_RU_TO_HR = {
         {
             "question": "напрасно",
             "correct": "nepotrebo",
-            "distractors": ["uzalud", "beskorisno", "naprasno"]
+            "distractors": ["uzalud", "loše", "naprasno"]
         },
     ]
 }

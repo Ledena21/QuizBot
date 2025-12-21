@@ -6,6 +6,7 @@ from telegram.error import BadRequest
 from progress_manager import _progress, get_user_data, save_progress, LEVELS
 from commands.word_command import WordCommand
 from commands.fact_command import FactCommand
+import random
 
 
 class ReminderCommand:
@@ -132,6 +133,8 @@ class ReminderCommand:
 
         question_index = session["current"]
         if question_index < 4:
-            await WordCommand._send_word_question(bot, chat_id, user_id)
+            rand = random.randint(1, 10)
+            direction = "ru_to_hr" if rand > 5 else "hr_to_ru"
+            await WordCommand._send_word_question(bot, chat_id, user_id, direction)
         else:
             await FactCommand._send_fact_question(bot, chat_id, user_id)
